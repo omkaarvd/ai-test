@@ -1,0 +1,11 @@
+{
+  "type": "module",
+  "dependencies": {
+    "@ai-sdk/google": "^0.0.35",
+    "@google/generative-ai": "^0.16.0",
+    "ai": "^3.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.4.0"
+  }
+}
