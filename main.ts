@@ -1,56 +1,37 @@
 import { google } from "@ai-sdk/google";
-import { CoreMessage, generateText } from "ai";
-import readline from "readline";
+import { generateObject } from "ai";
+import { z } from "zod";
 
-const rl = readline.createInterface({
-  input: process.stdin,
-  output: process.stdout,
-});
+async function main() {
+  /*
+  // Example of generating Enums
+  const { object } = await generateObject({
+    model: google("gemini-2.0-flash-exp"),
+    system:
+      `Classify the sentiment of the text as either ` +
+      `positive, negative, or neutral.`,
+    output: "enum",
+    enum: ["positive", "negative", "neutral"],
+    prompt: "i'm not feeling well today",
+  });
+  */
 
-const messagesToSend: CoreMessage[] = [
-  {
-    role: "system",
-    content:
-      "You are a helpful assistant that can generate text based on the given prompt and make sure to stick to the shorter answers.",
-  },
-];
+  const schema = z.object({
+    name: z.string(),
+    age: z.number(),
+    email: z.string(),
+  });
 
-console.log("Chat started!");
+  // Example of generating array of objects
+  const { object } = await generateObject({
+    model: google("gemini-2.0-flash-exp"),
+    system: `You are generating fake user data.`,
+    prompt: "Generate 5 fake users from the India.",
+    output: "array",
+    schema,
+  });
 
-rl.setPrompt("You: ");
-rl.prompt();
+  console.log(object);
+}
 
-rl.on("line", async (input) => {
-  if (input.trim().toLowerCase() === "exit") {
-    console.log("Exiting chat...");
-    rl.close();
-    return;
-  }
-
-  if (input.trim().length === 0) {
-    console.log("Please enter a valid input.");
-    rl.prompt();
-    return;
-  }
-
-  messagesToSend.push({ role: "user", content: input });
-
-  try {
-    const { text } = await generateText({
-      model: google("gemini-2.0-flash-exp"),
-      messages: messagesToSend,
-    });
-
-    console.log("Assistant: ", text);
-    messagesToSend.push({ role: "assistant", content: text });
-
-    // console.log("Messages sent so far: ", messagesToSend);
-  } catch (error) {
-    console.log(error);
-
-    rl.prompt();
-    return;
-  }
-
-  rl.prompt();
-});
+main();
