@@ -1,39 +1,26 @@
 import { google } from "@ai-sdk/google";
-import { cosineSimilarity, embed, embedMany } from "ai";
-
-const model = google.textEmbeddingModel("text-embedding-004");
+import { streamObject } from "ai";
+import { z } from "zod";
 
 async function main() {
-  const values = ["Dog", "Cat", "Car", "Bike"];
-
-  // `embeddings` -> they are in the same order as the values.
-  const { embeddings } = await embedMany({
-    model,
-    values,
+  const schema = z.object({
+    name: z.string(),
+    age: z.number(),
+    email: z.string(),
   });
 
-  // console.dir(embeddings, { depth: null });
-
-  const vectorList = embeddings.map((embedding, index) => ({
-    value: values[index],
-    embedding,
-  }));
-
-  const searchTerm = await embed({
-    model,
-    value: "barking dog",
+  const { partialObjectStream } = streamObject({
+    model: google("gemini-2.0-flash-exp"),
+    system: `You are generating fake user data.`,
+    prompt: "Generate 5 fake users from the India.",
+    output: "array",
+    schema,
   });
 
-  const entries = vectorList.map((entry) => {
-    return {
-      value: entry.value,
-      similarity: cosineSimilarity(entry.embedding, searchTerm.embedding),
-    };
-  });
-
-  const sortedEntries = entries.sort((a, b) => b.similarity - a.similarity);
-
-  console.dir(sortedEntries, { depth: null });
+  for await (const chunk of partialObjectStream) {
+    console.clear();
+    console.log(chunk);
+  }
 }
 
 main();
