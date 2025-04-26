@@ -1,37 +1,32 @@
 import { google } from "@ai-sdk/google";
-import { generateObject } from "ai";
-import { z } from "zod";
+import { generateText } from "ai";
+import { readFileSync } from "node:fs";
 
 async function main() {
-  /*
-  // Example of generating Enums
-  const { object } = await generateObject({
+  const { text: description } = await generateText({
     model: google("gemini-2.0-flash-exp"),
     system:
-      `Classify the sentiment of the text as either ` +
-      `positive, negative, or neutral.`,
-    output: "enum",
-    enum: ["positive", "negative", "neutral"],
-    prompt: "i'm not feeling well today",
-  });
-  */
-
-  const schema = z.object({
-    name: z.string(),
-    age: z.number(),
-    email: z.string(),
-  });
-
-  // Example of generating array of objects
-  const { object } = await generateObject({
-    model: google("gemini-2.0-flash-exp"),
-    system: `You are generating fake user data.`,
-    prompt: "Generate 5 fake users from the India.",
-    output: "array",
-    schema,
+      `You will receive an image. ` +
+      `Please create an alt text for the image. ` +
+      `Be concise. ` +
+      `Use adjectives only when necessary. ` +
+      `Do not pass 160 characters. ` +
+      `Use simple language. `,
+    messages: [
+      {
+        role: "user",
+        content: [
+          {
+            type: "image", // file | image | text
+            image: readFileSync("images/bluelock.png"),
+            mimeType: "image/png",
+          },
+        ],
+      },
+    ],
   });
 
-  console.log(object);
+  console.log(description);
 }
 
 main();
