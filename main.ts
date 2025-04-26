@@ -1,32 +1,39 @@
 import { google } from "@ai-sdk/google";
-import { generateText } from "ai";
-import { readFileSync } from "node:fs";
+import { cosineSimilarity, embed, embedMany } from "ai";
+
+const model = google.textEmbeddingModel("text-embedding-004");
 
 async function main() {
-  const { text: description } = await generateText({
-    model: google("gemini-2.0-flash-exp"),
-    system:
-      `You will receive an image. ` +
-      `Please create an alt text for the image. ` +
-      `Be concise. ` +
-      `Use adjectives only when necessary. ` +
-      `Do not pass 160 characters. ` +
-      `Use simple language. `,
-    messages: [
-      {
-        role: "user",
-        content: [
-          {
-            type: "image", // file | image | text
-            image: readFileSync("images/bluelock.png"),
-            mimeType: "image/png",
-          },
-        ],
-      },
-    ],
+  const values = ["Dog", "Cat", "Car", "Bike"];
+
+  // `embeddings` -> they are in the same order as the values.
+  const { embeddings } = await embedMany({
+    model,
+    values,
   });
 
-  console.log(description);
+  // console.dir(embeddings, { depth: null });
+
+  const vectorList = embeddings.map((embedding, index) => ({
+    value: values[index],
+    embedding,
+  }));
+
+  const searchTerm = await embed({
+    model,
+    value: "barking dog",
+  });
+
+  const entries = vectorList.map((entry) => {
+    return {
+      value: entry.value,
+      similarity: cosineSimilarity(entry.embedding, searchTerm.embedding),
+    };
+  });
+
+  const sortedEntries = entries.sort((a, b) => b.similarity - a.similarity);
+
+  console.dir(sortedEntries, { depth: null });
 }
 
 main();
